@@ -1,0 +1,113 @@
+/* Autonomiq - Professional Etsy Automation Website */
+/* Mobile-first, clean typography, accessible contrast */
+
+:root {
+    --primary-color: #2563eb;
+    --text-color: #1f2937;
+    --light-text: #4b5563;
+    --bg-color: #ffffff;
+    --header-bg: #f9fafb;
+    --border-color: #e5e7eb;
+    --max-width: 960px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+    background-color: var(--bg-color);
+}
+
+header {
+    background-color: var(--header-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 2rem 1.5rem;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+header p {
+    font-size: 1.1rem;
+    color: var(--light-text);
+}
+
+main {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem;
+}
+
+section {
+    margin-bottom: 2.5rem;
+}
+
+section h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.description p {
+    font-size: 1.1rem;
+    color: var(--text-color);
+    max-width: 720px;
+}
+
+.feature-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+}
+
+.feature-item {
+    padding: 1.5rem;
+    background-color: var(--header-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.feature-item h3 {
+    color: var(--primary-color);
+    font-size: 1.15rem;
+    margin-bottom: 0.5rem;
+}
+
+.feature-item p {
+    font-size: 0.95rem;
+    color: var(--light-text);
+}
+
+footer {
+    text-align: center;
+    padding: 2rem 1.5rem;
+    background-color: var(--header-bg);
+    border-top: 1px solid var(--border-color);
+    color: var(--light-text);
+    font-size: 0.95rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    header h1 {
+        font-size: 2rem;
+    }
+
+    section h2 {
+        font-size: 1.5rem;
+    }
+}
