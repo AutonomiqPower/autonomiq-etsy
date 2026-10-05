@@ -35,7 +35,6 @@
         const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
         const pad = b64.length % 4 === 0 ? '' : '='.repeat(4 - (b64.length % 4));
         const bin = atob(b64 + pad);
-        // Convert UTF-8 bytes to string
         const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
         return new TextDecoder('utf-8').decode(bytes);
       };
@@ -53,7 +52,6 @@
           try {
             setStatus('Validating state and PKCE verifier…');
 
-            // We encoded {s: <csrf>, v: <code_verifier>} into the state value.
             const stateObj = JSON.parse(base64urlToText(state));
             const code_verifier = stateObj && stateObj.v;
             const csrf = stateObj && stateObj.s;
@@ -62,7 +60,6 @@
               throw new Error('Could not recover PKCE code_verifier from state.');
             }
 
-            // Exchange authorization code for access_token + refresh_token
             setStatus('Exchanging authorization code for tokens…');
 
             const body = new URLSearchParams();
@@ -81,11 +78,12 @@
             const data = await resp.json().catch(() => ({}));
 
             if (!resp.ok) {
-              const detail = data && (data.error || data.error_description) ? (data.error + ': ' + data.error_description) : JSON.stringify(data);
+              const detail = data && (data.error || data.error_description)
+                ? (data.error + ': ' + data.error_description)
+                : JSON.stringify(data);
               throw new Error('Token exchange failed: HTTP ' + resp.status + ' — ' + detail);
             }
 
-            // Etsy returns access_token (Bearer) and refresh_token.
             const tokenPayload = {
               access_token: data.access_token,
               refresh_token: data.refresh_token,
@@ -93,14 +91,13 @@
               token_type: data.token_type,
               scope: data.scope,
               received_at: new Date().toISOString(),
-              // Not used by StarNet directly; helps traceability.
               csrf_hint: csrf,
             };
 
-            // Store in browser storage so the next step can pick it up if needed.
+            // Persist in-browser for convenience.
             localStorage.setItem(STORAGE_KEY, JSON.stringify(tokenPayload));
 
-            // Also download a JSON file for secure import into StarNet.
+            // Download for secure import into StarNet.
             const blob = new Blob([JSON.stringify(tokenPayload, null, 2)], { type: 'application/json' });
             const dlUrl = URL.createObjectURL(blob);
             const a = document.createElement('a');
