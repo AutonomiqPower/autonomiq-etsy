@@ -53,6 +53,9 @@
       <div class="value" id="state">(missing)</div>
 
       <script>
+        // IMPORTANT: Treat `state` as an opaque random string.
+        // Do NOT decode it, atob() it, JSON.parse() it, or send it anywhere.
+        // This page must not exchange the code for tokens.
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
         const state = urlParams.get('state');
