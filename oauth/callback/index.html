@@ -5,116 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Autonomiq Etsy OAuth Callback</title>
     <style>
-      body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;line-height:1.4;color:#111}
-      code{background:#f3f4f6;padding:2px 6px;border-radius:6px}
-      .box{border:1px solid #e5e7eb;border-radius:12px;padding:16px;max-width:760px}
-      .ok{color:#166534}
-      .err{color:#b91c1c}
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        margin: 24px;
+        line-height: 1.4;
+        color: #111;
+      }
+      .box {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        max-width: 760px;
+      }
+      .label {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #6b7280;
+        letter-spacing: 0.02em;
+      }
+      .value {
+        margin-top: 6px;
+        padding: 10px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        background: #f9fafb;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 13px;
+      }
+      .hint {
+        margin-top: 8px;
+        color: #6b7280;
+        font-size: 12px;
+      }
     </style>
   </head>
   <body>
     <div class="box">
-      <h2>Completing Etsy OAuth…</h2>
-      <p id="status">Starting…</p>
-      <p style="margin-top:12px; color:#6b7280;">If this page stays blank, refresh and ensure the redirect hit this exact callback URL.</p>
+      <h2>Etsy OAuth Callback</h2>
+      <div class="hint">This page only displays the one-time authorization code and the exact returned state.</div>
+
+      <div class="label">AUTHORIZATION CODE:</div>
+      <div class="value" id="code">(missing)</div>
+
+      <div class="label">STATE:</div>
+      <div class="value" id="state">(missing)</div>
+
+      <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const state = urlParams.get('state');
+
+        document.getElementById('code').textContent = code ? code : '(missing)';
+        document.getElementById('state').textContent = state ? state : '(missing)';
+      </script>
     </div>
-
-    <script>
-      const CALLBACK_URL = 'https://autonomiqpower.github.io/autonomiq-etsy/oauth/callback';
-      const ETSY_CLIENT_ID = 'wnlk7pleyef9fdvt13al8ylf'; // keystring (not a secret)
-      const TOKEN_ENDPOINT = 'https://api.etsy.com/v3/public/oauth/token';
-      const STORAGE_KEY = 'starnet:etsy:oauth_tokens';
-
-      const statusEl = document.getElementById('status');
-      const setStatus = (msg, cls) => {
-        statusEl.textContent = msg;
-        statusEl.className = cls || '';
-      };
-
-      const base64urlToText = (b64url) => {
-        const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
-        const pad = b64.length % 4 === 0 ? '' : '='.repeat(4 - (b64.length % 4));
-        const bin = atob(b64 + pad);
-        const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
-        return new TextDecoder('utf-8').decode(bytes);
-      };
-
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
-      const state = urlParams.get('state');
-
-      if (!code) {
-        setStatus('Missing "code" query parameter. OAuth did not complete correctly.', 'err');
-      } else if (!state) {
-        setStatus('Missing "state" query parameter. OAuth did not complete correctly.', 'err');
-      } else {
-        (async () => {
-          try {
-            setStatus('Validating state and PKCE verifier…');
-
-            const stateObj = JSON.parse(base64urlToText(state));
-            const code_verifier = stateObj && stateObj.v;
-            const csrf = stateObj && stateObj.s;
-
-            if (!code_verifier) {
-              throw new Error('Could not recover PKCE code_verifier from state.');
-            }
-
-            setStatus('Exchanging authorization code for tokens…');
-
-            const body = new URLSearchParams();
-            body.set('grant_type', 'authorization_code');
-            body.set('client_id', ETSY_CLIENT_ID);
-            body.set('redirect_uri', CALLBACK_URL);
-            body.set('code', code);
-            body.set('code_verifier', code_verifier);
-
-            const resp = await fetch(TOKEN_ENDPOINT, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: body.toString(),
-            });
-
-            const data = await resp.json().catch(() => ({}));
-
-            if (!resp.ok) {
-              const detail = data && (data.error || data.error_description)
-                ? (data.error + ': ' + data.error_description)
-                : JSON.stringify(data);
-              throw new Error('Token exchange failed: HTTP ' + resp.status + ' — ' + detail);
-            }
-
-            const tokenPayload = {
-              access_token: data.access_token,
-              refresh_token: data.refresh_token,
-              expires_in: data.expires_in,
-              token_type: data.token_type,
-              scope: data.scope,
-              received_at: new Date().toISOString(),
-              csrf_hint: csrf,
-            };
-
-            // Persist in-browser for convenience.
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(tokenPayload));
-
-            // Download for secure import into StarNet.
-            const blob = new Blob([JSON.stringify(tokenPayload, null, 2)], { type: 'application/json' });
-            const dlUrl = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = dlUrl;
-            a.download = 'etsy-oauth-tokens.json';
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(dlUrl);
-
-            setStatus('OAuth complete. Tokens downloaded to your device as etsy-oauth-tokens.json.', 'ok');
-          } catch (e) {
-            console.error(e);
-            setStatus(String(e && e.message ? e.message : e), 'err');
-          }
-        })();
-      }
-    </script>
   </body>
 </html>
